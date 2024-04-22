@@ -1,0 +1,24 @@
+pipeline {
+    agent none
+    stages {
+        stage('maven-version') {
+            agent {
+                label 'sonar'
+            }
+            steps {
+                script {
+                    def mvnVersionOutput = sh(script: 'mvn --v', returnStdout: true).trim()
+                    if (mvnVersionOutput.contains('command not found') || mvnVersionOutput.contains('not recognized as the name of a cmdlet')) {
+                        error "Maven not found"
+                    }
+                }
+            }
+            post {
+                failure {
+                    echo "First stage failed, proceeding to the second stage"
+                    build job: 'other-job-name', wait: false
+                }
+            }
+        }
+    }
+}
